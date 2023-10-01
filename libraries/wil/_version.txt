@@ -1,0 +1,3 @@
+https://github.com/microsoft/wil/tree/a6c9f2d8520e830b04c47c3c395bac428696cc0d
++
+https://github.com/microsoft/wil/pull/357

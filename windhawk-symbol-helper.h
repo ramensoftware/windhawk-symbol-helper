@@ -1,0 +1,1 @@
+// windhawk-symbol-helper.h
