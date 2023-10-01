@@ -74,7 +74,7 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
     m_resultsEdit.Create(m_hWnd, rc, nullptr,
                          WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_MULTILINE |
                              ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN |
-                             WS_VSCROLL | WS_HSCROLL,
+                             ES_NOHIDESEL | WS_VSCROLL | WS_HSCROLL,
                          WS_EX_CLIENTEDGE, IDC_RESULTS);
 
     CLogFont fontAttributes(AtlGetDefaultGuiFont());
