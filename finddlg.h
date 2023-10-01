@@ -1,4 +1,3 @@
-
 #ifndef __FindReplaceDialogWithMessageFilter_h__
 #define __FindReplaceDialogWithMessageFilter_h__
 
@@ -23,10 +22,19 @@ class CFindReplaceDialogWithMessageFilter :
 protected:
 	CMessageLoop* m_messageLoop;
 
+	constexpr static WORD kFindReplaceBufferSize = MAXWORD;  // 64K buffer size.
+	std::wstring m_findText = std::wstring(kFindReplaceBufferSize, L'\0');
+	std::wstring m_replaceText = std::wstring(kFindReplaceBufferSize, L'\0');
+
 public:
 	CFindReplaceDialogWithMessageFilter(CMessageLoop* messageLoop) :
-		m_messageLoop(messageLoop)
-	{
+		m_messageLoop(messageLoop) {
+		// Override buffers and sizes to have a larger limit. The default limit is
+		// 128 bytes, not enough.
+		m_fr.lpstrFindWhat = m_findText.data();
+		m_fr.wFindWhatLen = kFindReplaceBufferSize;
+		m_fr.lpstrReplaceWith = m_replaceText.data();
+		m_fr.wReplaceWithLen = kFindReplaceBufferSize;
 	}
 
 public:
