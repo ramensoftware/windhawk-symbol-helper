@@ -162,8 +162,9 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                                             m_enumSymbolsResult,
                                         hWnd =
                                             m_hWnd](std::stop_token stopToken) {
+        CStringA logOutput;
+
         try {
-            CStringA logOutput;
             CString result;
             int count = 0;
 
@@ -222,7 +223,8 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
             enumSymbolsResult.Format(L"Found %d symbols\r\n%S%s", count,
                                      logOutput.GetString(), result.GetString());
         } catch (const std::exception& e) {
-            enumSymbolsResult.Format(L"Error: %S\r\n", e.what());
+            enumSymbolsResult.Format(L"Error: %S\r\n%S", e.what(),
+                                     logOutput.GetString());
         }
 
         CWindow(hWnd).PostMessage(UWM_ENUM_SYMBOLS_DONE);
