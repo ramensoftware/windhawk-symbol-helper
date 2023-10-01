@@ -26,13 +26,15 @@ public:
 	}
 
 	BEGIN_MSG_MAP(CEditView)
-        MESSAGE_HANDLER(WM_CREATE, OnCreate)
+		MESSAGE_HANDLER(WM_CREATE, OnCreate)
+
+		MSG_WM_GETDLGCODE(OnGetDlgCode)
 
 		CHAIN_MSG_MAP_ALT(editCommandsClass, 1)
 
 		CHAIN_MSG_MAP_ALT(findReplaceClass, 1)
 	END_MSG_MAP()
-	
+
 	LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 	{
 		LRESULT lRet = DefWindowProc(uMsg, wParam, lParam);
@@ -40,6 +42,13 @@ public:
 		LimitText(0);
 
 		return lRet;
+	}
+
+	UINT OnGetDlgCode(LPMSG lpMsg)
+	{
+		// Prevent selecting all text when focused.
+		// https://devblogs.microsoft.com/oldnewthing/20031114-00/?p=41823
+		return DefWindowProc() & ~DLGC_HASSETSEL;
 	}
 
 // Overrides from CEditFindReplaceImpl
