@@ -2,7 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by windhawk-symbol-helper.rc
 //
-#define IDD_ABOUTBOX                    100
 #define IDR_MAINFRAME                   128
 #define IDD_MAINDLG                     129
 #define IDC_STATIC_ENGINE_DIR           1000

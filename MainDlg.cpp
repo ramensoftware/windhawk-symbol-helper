@@ -51,7 +51,7 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
 
     // Register object for message filtering and idle updates.
     CMessageLoop* pLoop = _Module.GetMessageLoop();
-    ATLASSERT(pLoop != NULL);
+    ATLASSERT(pLoop != nullptr);
     pLoop->AddMessageFilter(this);
 
     // Populate values.

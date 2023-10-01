@@ -8,13 +8,13 @@ int WINAPI _tWinMain(HINSTANCE hInstance,
                      HINSTANCE /*hPrevInstance*/,
                      LPTSTR /*lpstrCmdLine*/,
                      int nCmdShow) {
-    HRESULT hRes = ::CoInitialize(NULL);
+    HRESULT hRes = ::CoInitialize(nullptr);
     ATLASSERT(SUCCEEDED(hRes));
 
     AtlInitCommonControls(
         ICC_BAR_CLASSES);  // add flags to support other controls
 
-    hRes = _Module.Init(NULL, hInstance);
+    hRes = _Module.Init(nullptr, hInstance);
     ATLASSERT(SUCCEEDED(hRes));
 
     CMessageLoop theLoop;
