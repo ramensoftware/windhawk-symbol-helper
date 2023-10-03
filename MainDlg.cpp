@@ -6,6 +6,89 @@
 
 namespace {
 
+struct InitialUIValues {
+    CString engineDir;
+    CString symbolsDir;
+    CString symbolServer;
+    CString targetExecutable;
+};
+
+InitialUIValues GetInitialUIValues() {
+    InitialUIValues values;
+
+    std::filesystem::path iniFilePath = wil::GetModuleFileName<std::wstring>();
+    iniFilePath.replace_filename(L"windhawk-symbol-helper.ini");
+
+    std::filesystem::path fallbackIniFilePath1 = iniFilePath;
+    fallbackIniFilePath1.replace_filename(L"windhawk.ini");
+
+    std::filesystem::path fallbackIniFilePath2 =
+        wil::ExpandEnvironmentStrings<std::wstring>(
+            LR"(%ProgramFiles%\Windhawk\windhawk.ini)");
+
+    WCHAR buffer[MAX_PATH];
+    constexpr DWORD bufferSize = static_cast<DWORD>(std::size(buffer));
+
+    if (GetPrivateProfileString(L"Config", L"EnginePath", L"", buffer,
+                                bufferSize, iniFilePath.c_str())) {
+        values.engineDir =
+            wil::ExpandEnvironmentStrings<std::wstring>(buffer).c_str();
+    } else if (GetPrivateProfileString(L"Storage", L"EnginePath", L"", buffer,
+                                       bufferSize,
+                                       fallbackIniFilePath1.c_str())) {
+        auto expanded = wil::ExpandEnvironmentStrings<std::wstring>(buffer);
+        values.engineDir =
+            (fallbackIniFilePath1.parent_path() / expanded).c_str();
+    } else if (GetPrivateProfileString(L"Storage", L"EnginePath", L"", buffer,
+                                       bufferSize,
+                                       fallbackIniFilePath2.c_str())) {
+        auto expanded = wil::ExpandEnvironmentStrings<std::wstring>(buffer);
+        values.engineDir =
+            (fallbackIniFilePath2.parent_path() / expanded).c_str();
+    } else {
+        values.engineDir = LR"(C:\Program Files\Windhawk\Engine\1.3.1)";
+    }
+
+    if (GetPrivateProfileString(L"Config", L"SymbolsPath", L"", buffer,
+                                bufferSize, iniFilePath.c_str())) {
+        values.symbolsDir =
+            wil::ExpandEnvironmentStrings<std::wstring>(buffer).c_str();
+    } else if (GetPrivateProfileString(L"Storage", L"AppDataPath", L"", buffer,
+                                       bufferSize,
+                                       fallbackIniFilePath1.c_str())) {
+        auto expanded = wil::ExpandEnvironmentStrings<std::wstring>(buffer);
+        values.symbolsDir = (fallbackIniFilePath1.parent_path() / expanded /
+                             L"Engine" / L"Symbols")
+                                .c_str();
+    } else if (GetPrivateProfileString(L"Storage", L"AppDataPath", L"", buffer,
+                                       bufferSize,
+                                       fallbackIniFilePath2.c_str())) {
+        auto expanded = wil::ExpandEnvironmentStrings<std::wstring>(buffer);
+        values.symbolsDir = (fallbackIniFilePath2.parent_path() / expanded /
+                             L"Engine" / L"Symbols")
+                                .c_str();
+    } else {
+        values.symbolsDir = LR"(C:\ProgramData\Windhawk\Engine\Symbols)";
+    }
+
+    if (GetPrivateProfileString(L"Config", L"SymbolServer", L"", buffer,
+                                bufferSize, iniFilePath.c_str())) {
+        values.symbolServer = buffer;
+    } else {
+        values.symbolServer = L"https://msdl.microsoft.com/download/symbols";
+    }
+
+    if (GetPrivateProfileString(L"Config", L"TargetExecutable", L"", buffer,
+                                bufferSize, iniFilePath.c_str())) {
+        values.targetExecutable =
+            wil::ExpandEnvironmentStrings<std::wstring>(buffer).c_str();
+    } else {
+        values.targetExecutable = LR"(C:\Windows\Explorer.exe)";
+    }
+
+    return values;
+}
+
 void OpenUrl(HWND hWnd, PCWSTR url) {
     if ((INT_PTR)ShellExecute(hWnd, L"open", url, nullptr, nullptr,
                               SW_SHOWNORMAL) <= 32) {
@@ -55,14 +138,15 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
     pLoop->AddMessageFilter(this);
 
     // Populate values.
-    CEdit(GetDlgItem(IDC_ENGINE_DIR))
-        .SetWindowText(LR"(C:\Program Files\Windhawk\Engine\1.3.1)");
+    auto initialUIValues = GetInitialUIValues();
+    CEdit(GetDlgItem(IDC_ENGINE_DIR)).SetWindowText(initialUIValues.engineDir);
     CEdit(GetDlgItem(IDC_SYMBOLS_DIR))
-        .SetWindowText(LR"(C:\ProgramData\Windhawk\Engine\Symbols)");
+        .SetWindowText(initialUIValues.symbolsDir);
     CEdit(GetDlgItem(IDC_SYMBOL_SERVER))
-        .SetWindowText(LR"(https://msdl.microsoft.com/download/symbols)");
+        .SetWindowText(initialUIValues.symbolServer);
     CEdit(GetDlgItem(IDC_TARGET_EXECUTABLE))
-        .SetWindowText(LR"(C:\Windows\Explorer.exe)");
+        .SetWindowText(initialUIValues.targetExecutable);
+
     CButton(GetDlgItem(IDC_UNDECORATED)).SetCheck(BST_CHECKED);
 
     // Init edit control.
