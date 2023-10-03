@@ -35,6 +35,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         CHAIN_MSG_MAP(CDialogResize<CMainDlg>)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_DESTROY(OnDestroy)
+        MSG_WM_DROPFILES(OnDropFiles)
         COMMAND_ID_HANDLER_EX(ID_APP_ABOUT, OnAppAbout)
         COMMAND_ID_HANDLER_EX(IDOK, OnOK)
         COMMAND_ID_HANDLER_EX(IDCANCEL, OnCancel)
@@ -47,6 +48,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
 
     BOOL OnInitDialog(CWindow wndFocus, LPARAM lInitParam);
     void OnDestroy();
+    void OnDropFiles(HDROP hDropInfo);
     void OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnOK(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl);

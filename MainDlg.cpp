@@ -178,6 +178,20 @@ void CMainDlg::OnDestroy() {
     PostQuitMessage(0);
 }
 
+void CMainDlg::OnDropFiles(HDROP hDropInfo) {
+    if (DragQueryFile(hDropInfo, 0xFFFFFFFF, NULL, 0) == 1) {
+        WCHAR fileName[MAX_PATH];
+        DragQueryFile(hDropInfo, 0, fileName, MAX_PATH);
+
+        SetDlgItemText(IDC_TARGET_EXECUTABLE, fileName);
+    } else {
+        MessageBox(L"Please drop one file at a time", L"Unsupported",
+                   MB_ICONINFORMATION);
+    }
+
+    DragFinish(hDropInfo);
+}
+
 void CMainDlg::OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl) {
     PCWSTR content =
         L"A tool to get symbols from executables the same way Windhawk mods do "
