@@ -4,6 +4,8 @@
 
 #include "symbol_enum.h"
 
+#define WSH_VERSION L"1.0.1"
+
 namespace {
 
 struct InitialUIValues {
@@ -198,8 +200,7 @@ void CMainDlg::OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl) {
         L"with the symbols API.\n\n"
         L"The tool was created to help with Windhawk mod development.\n\n"
         L"Windhawk can be downloaded at <A "
-        L"HREF=\"https://windhawk.net\">windhawk.net</A>.\n\n"
-        L"Compiled at " __DATE__ " " __TIME__ "\n\n";
+        L"HREF=\"https://windhawk.net\">windhawk.net</A>.";
 
     TASKDIALOGCONFIG taskDialogConfig{
         .cbSize = sizeof(taskDialogConfig),
@@ -209,7 +210,7 @@ void CMainDlg::OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl) {
                    TDF_POSITION_RELATIVE_TO_WINDOW,
         .pszWindowTitle = L"About",
         .pszMainIcon = MAKEINTRESOURCE(IDR_MAINFRAME),
-        .pszMainInstruction = L"Windhawk Symbol Helper",
+        .pszMainInstruction = L"Windhawk Symbol Helper v" WSH_VERSION,
         .pszContent = content,
         .pfCallback = [](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                          LONG_PTR lpRefData) -> HRESULT {
