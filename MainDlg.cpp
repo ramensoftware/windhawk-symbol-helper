@@ -197,21 +197,18 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                         throw std::runtime_error("Cancelled");
                     }
 
-                    CString addressStr;
-                    addressStr.Format(L"%p", iter->address);
+                    CString addressPrefix;
+                    addressPrefix.Format(L"[%08" TEXT(PRIXPTR) L"] ",
+                                         iter->address);
 
                     if (threadParams.undecorated) {
-                        result += L"[";
-                        result += addressStr;
-                        result += L"] ";
+                        result += addressPrefix;
                         result += iter->name;
                         result += L"\r\n";
                     }
 
                     if (threadParams.decorated) {
-                        result += L"[";
-                        result += addressStr;
-                        result += L"] ";
+                        result += addressPrefix;
                         result += iter->nameDecorated;
                         result += L"\r\n";
                     }

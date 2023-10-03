@@ -39,6 +39,7 @@ extern CAppModule _Module;
 // STL
 
 #include <atomic>
+#include <cinttypes>
 #include <filesystem>
 #include <functional>
 #include <optional>
