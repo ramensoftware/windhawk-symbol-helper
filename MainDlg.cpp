@@ -264,8 +264,14 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
         CStringA logOutput;
 
         try {
-            CString result;
-            int count = 0;
+            // Use a set for sorting and to avoid duplicate chunks in the
+            // output. Duplicates can happen if the same symbol is listed with
+            // multiple types, such as SymTagFunction and SymTagPublicSymbol, or
+            // if two variants of a decorated name are identical when
+            // undecorated.
+            std::set<CString> resultListChunks;
+            size_t resultListTotalLength = 0;
+            size_t count = 0;
 
             {
                 SymbolEnum::Callbacks callbacks{
@@ -285,39 +291,65 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                     };
                 }
 
-                SymbolEnum symbolEnum(threadParams.targetExecutable.GetString(),
-                                      0, threadParams.engineDir.GetString(),
-                                      threadParams.symbolsDir.GetString(),
-                                      threadParams.symbolServer.GetString(),
-                                      callbacks);
+                CString addressPrefix;
+                CString chunk;
+
+                SymbolEnum symbolEnum(
+                    threadParams.targetExecutable.GetString(), nullptr,
+                    threadParams.engineDir.GetString(),
+                    threadParams.symbolsDir.GetString(),
+                    threadParams.symbolServer.GetString(), callbacks);
 
                 while (auto iter = symbolEnum.GetNextSymbol(false)) {
                     if (stopToken.stop_requested()) {
                         throw std::runtime_error("Cancelled");
                     }
 
-                    CString addressPrefix;
+                    if (!threadParams.decorated && !threadParams.undecorated) {
+                        count++;
+                        continue;
+                    }
+
+                    if (!iter->nameDecorated && !iter->name) {
+                        continue;
+                    }
+
                     addressPrefix.Format(L"[%08" TEXT(PRIXPTR) L"] ",
                                          iter->address);
 
-                    if (threadParams.undecorated) {
-                        result += addressPrefix;
-                        result += iter->name;
-                        result += L"\r\n";
-                    }
+                    chunk.Empty();
 
                     if (threadParams.decorated) {
-                        result += addressPrefix;
-                        result += iter->nameDecorated;
-                        result += L"\r\n";
+                        chunk += addressPrefix;
+                        chunk += iter->nameDecorated ? iter->nameDecorated
+                                                     : L"<no-decorated-name>";
+                        chunk += L"\r\n";
                     }
 
-                    count++;
+                    if (threadParams.undecorated) {
+                        chunk += addressPrefix;
+                        chunk +=
+                            iter->name ? iter->name : L"<no-undecorated-name>";
+                        chunk += L"\r\n";
+                    }
+
+                    auto [_, inserted] = resultListChunks.insert(chunk);
+                    if (inserted) {
+                        resultListTotalLength += chunk.GetLength();
+                        count++;
+                    }
                 }
             }
 
-            enumSymbolsResult.Format(L"Found %d symbols\r\n%S%s", count,
-                                     logOutput.GetString(), result.GetString());
+            enumSymbolsResult.Preallocate(logOutput.GetLength() +
+                                          resultListTotalLength + 128);
+
+            enumSymbolsResult.Format(L"Found %zu symbols\r\n%S", count,
+                                     logOutput.GetString());
+
+            for (const auto& chunk : resultListChunks) {
+                enumSymbolsResult += chunk;
+            }
         } catch (const std::exception& e) {
             enumSymbolsResult.Format(L"Error: %S\r\n%S", e.what(),
                                      logOutput.GetString());

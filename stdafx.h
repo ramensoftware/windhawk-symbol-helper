@@ -43,6 +43,7 @@ extern CAppModule _Module;
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <set>
 #include <string>
 #include <thread>
 
