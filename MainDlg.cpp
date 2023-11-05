@@ -345,8 +345,9 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                 }
             }
 
-            enumSymbolsResult.Preallocate(logOutput.GetLength() +
-                                          resultListTotalLength + 128);
+            enumSymbolsResult.Preallocate(
+                logOutput.GetLength() +
+                static_cast<int>(resultListTotalLength) + 128);
 
             enumSymbolsResult.Format(L"Found %zu symbols\r\n%S", count,
                                      logOutput.GetString());
