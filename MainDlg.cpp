@@ -4,7 +4,7 @@
 
 #include "symbol_enum.h"
 
-#define WSH_VERSION L"1.0.1"
+#define WSH_VERSION L"1.0.2"
 
 namespace {
 
