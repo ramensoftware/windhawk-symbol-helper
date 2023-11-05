@@ -266,6 +266,7 @@ SymbolEnum::SymbolEnum(HMODULE moduleBase,
                        PCWSTR enginePath,
                        PCWSTR symbolsPath,
                        PCWSTR symbolServer,
+                       UndecorateMode undecorateMode,
                        Callbacks callbacks) {
     if (!moduleBase) {
         moduleBase = GetModuleHandle(nullptr);
@@ -274,7 +275,7 @@ SymbolEnum::SymbolEnum(HMODULE moduleBase,
     std::wstring modulePath = wil::GetModuleFileName<std::wstring>(moduleBase);
 
     SymbolEnum(modulePath.c_str(), moduleBase, enginePath, symbolsPath,
-               symbolServer, std::move(callbacks));
+               symbolServer, undecorateMode, std::move(callbacks));
 }
 
 SymbolEnum::SymbolEnum(PCWSTR modulePath,
@@ -282,8 +283,9 @@ SymbolEnum::SymbolEnum(PCWSTR modulePath,
                        PCWSTR enginePath,
                        PCWSTR symbolsPath,
                        PCWSTR symbolServer,
+                       UndecorateMode undecorateMode,
                        Callbacks callbacks)
-    : m_moduleBase(moduleBase) {
+    : m_moduleBase(moduleBase), m_undecorateMode(undecorateMode) {
 #ifdef _WIN64
     g_enginePath = std::filesystem::path(enginePath) / L"64";
 #else
@@ -312,8 +314,7 @@ SymbolEnum::SymbolEnum(PCWSTR modulePath,
         diaGlobal->findChildren(SymTagNull, nullptr, nsNone, &m_diaSymbols));
 }
 
-std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol(
-    bool compatDemangling) {
+std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
     while (true) {
         wil::com_ptr<IDiaSymbol> diaSymbol;
         ULONG count = 0;
@@ -332,18 +333,21 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol(
         }
 
         // Temporary compatibility code.
-        if (compatDemangling) {
+        if (m_undecorateMode == UndecorateMode::OldVersionCompatible) {
             // get_undecoratedName uses 0x20800 as flags:
             // * UNDNAME_32_BIT_DECODE (0x800)
             // * UNDNAME_NO_PTR64 (0x20000)
             // For some reason, the old msdia version still included ptr64 in
             // the output. For compatibility, use get_undecoratedNameEx and
             // don't pass this flag.
-            const DWORD kUndname32BitDecode = 0x800;
+            constexpr DWORD kUndname32BitDecode = 0x800;
             hr = diaSymbol->get_undecoratedNameEx(kUndname32BitDecode,
                                                   &m_currentSymbolName);
-        } else {
+        } else if (m_undecorateMode == UndecorateMode::Default) {
             hr = diaSymbol->get_undecoratedName(&m_currentSymbolName);
+        } else {
+            m_currentSymbolName.reset();
+            hr = S_OK;
         }
         THROW_IF_FAILED(hr);
         if (hr == S_FALSE) {

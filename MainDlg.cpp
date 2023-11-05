@@ -294,15 +294,19 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                 CString addressPrefix;
                 CString chunk;
 
-                SymbolEnum symbolEnum(
-                    threadParams.targetExecutable.GetString(), nullptr,
-                    threadParams.engineDir.GetString(),
-                    threadParams.symbolsDir.GetString(),
-                    threadParams.symbolServer.GetString(), callbacks);
+                SymbolEnum symbolEnum(threadParams.targetExecutable.GetString(),
+                                      nullptr,
+                                      threadParams.engineDir.GetString(),
+                                      threadParams.symbolsDir.GetString(),
+                                      threadParams.symbolServer.GetString(),
+                                      threadParams.undecorated
+                                          ? SymbolEnum::UndecorateMode::Default
+                                          : SymbolEnum::UndecorateMode::None,
+                                      callbacks);
 
-                while (auto iter = symbolEnum.GetNextSymbol(false)) {
+                while (auto iter = symbolEnum.GetNextSymbol()) {
                     if (stopToken.stop_requested()) {
-                        throw std::runtime_error("Cancelled");
+                        throw std::runtime_error("Canceled");
                     }
 
                     if (!threadParams.decorated && !threadParams.undecorated) {
