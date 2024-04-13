@@ -390,7 +390,10 @@ LRESULT CMainDlg::OnEnumSymbolsDone(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     return 0;
 }
-const COMDLG_FILTERSPEC file_types[] = {{L"All Files (*.*)", L"*.*"}};
+const COMDLG_FILTERSPEC file_types[] = {
+    {L"Supported Files (*.dll;*.exe)", L"*.dll;*.exe"},
+    {L"All Files (*.*)", L"*.*"},
+};
 
 LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
                                     WORD /*wID*/,
@@ -426,8 +429,12 @@ LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
     if (FAILED(hr))
         return E_FAIL;
 
+    pfd->SetTitle(L"Browse");
+    if (FAILED(hr))
+        return E_FAIL;
+
     // Show the dialog
-    hr = pfd->Show(GetParent());
+    hr = pfd->Show(this->m_hWnd);
     if (FAILED(hr))
         return E_FAIL;
 

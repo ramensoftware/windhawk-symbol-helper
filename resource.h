@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by windhawk-symbol-helper.rc
 //
+#define IDCANCEL2                       3
 #define IDR_MAINFRAME                   128
 #define IDD_MAINDLG                     129
 #define IDC_STATIC_ENGINE_DIR           1000
@@ -18,7 +19,6 @@
 #define IDC_STATIC_RESULTS              1011
 #define IDC_RESULTS                     1012
 #define IDC_RESULTS_PLACEHOLDER         1013
-#define IDC_BUTTON1                     1014
 #define IDC_PICKFILE                    1014
 
 // Next default values for new objects
