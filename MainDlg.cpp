@@ -401,9 +401,8 @@ LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
                                     BOOL& /*bHandled*/) {
     // https://learn.microsoft.com/en-us/windows/win32/shell/common-file-dialog#basic-usage
 
-    IFileDialog* pfd = NULL;
-    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL,
-                                  CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+    CComPtr<IFileDialog> pfd;
+    HRESULT hr = pfd.CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER);
 
     if (FAILED(hr))
         return E_FAIL;
@@ -438,7 +437,7 @@ LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
     if (FAILED(hr))
         return E_FAIL;
 
-    IShellItem* psiResult;
+    CComPtr<IShellItem> psiResult;
     hr = pfd->GetResult(&psiResult);
     if (SUCCEEDED(hr)) {
         PWSTR pszFilePath = NULL;
@@ -449,8 +448,6 @@ LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
 
             CoTaskMemFree(pszFilePath);
         }
-        psiResult->Release();
     }
-    pfd->Release();
     return 0;
 }
