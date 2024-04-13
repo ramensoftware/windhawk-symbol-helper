@@ -390,3 +390,60 @@ LRESULT CMainDlg::OnEnumSymbolsDone(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     return 0;
 }
+const COMDLG_FILTERSPEC file_types[] = {{L"All Files (*.*)", L"*.*"}};
+
+LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
+                                    WORD /*wID*/,
+                                    HWND /*hWndCtl*/,
+                                    BOOL& /*bHandled*/) {
+    // https://learn.microsoft.com/en-us/windows/win32/shell/common-file-dialog#basic-usage
+
+    IFileDialog* pfd = NULL;
+    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL,
+                                  CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // get options
+    DWORD dwFlags;
+    hr = pfd->GetOptions(&dwFlags);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // get shell items only for file system items.
+    hr = pfd->SetOptions(dwFlags | FOS_FORCEFILESYSTEM);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // set the file types
+    hr = pfd->SetFileTypes(ARRAYSIZE(file_types), file_types);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // the first element from the array
+    hr = pfd->SetFileTypeIndex(1);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // Show the dialog
+    hr = pfd->Show(GetParent());
+    if (FAILED(hr))
+        return E_FAIL;
+
+    IShellItem* psiResult;
+    hr = pfd->GetResult(&psiResult);
+    if (SUCCEEDED(hr)) {
+        PWSTR pszFilePath = NULL;
+        hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+        if (SUCCEEDED(hr)) {
+            // set the file name on the textbox
+            CEdit(GetDlgItem(IDC_TARGET_EXECUTABLE)).SetWindowText(pszFilePath);
+
+            CoTaskMemFree(pszFilePath);
+        }
+        psiResult->Release();
+    }
+    pfd->Release();
+    return 0;
+}
