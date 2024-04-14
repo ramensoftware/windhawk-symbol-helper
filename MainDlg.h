@@ -23,6 +23,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         DLGRESIZE_CONTROL(IDC_SYMBOL_SERVER, DLSZ_SIZE_X)
         DLGRESIZE_CONTROL(IDC_STATIC_TARGET_EXECUTABLE, DLSZ_SIZE_X)
         DLGRESIZE_CONTROL(IDC_TARGET_EXECUTABLE, DLSZ_SIZE_X)
+        DLGRESIZE_CONTROL(IDC_PICKFILE, DLSZ_MOVE_X)
         DLGRESIZE_CONTROL(IDC_STATIC_RESULTS, DLSZ_SIZE_X)
         DLGRESIZE_CONTROL(IDC_RESULTS, DLSZ_SIZE_X | DLSZ_SIZE_Y)
         DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y)
@@ -42,6 +43,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         MESSAGE_HANDLER_EX(UWM_PROGRESS, OnProgress)
         MESSAGE_HANDLER_EX(UWM_ENUM_SYMBOLS_DONE, OnEnumSymbolsDone)
         CHAIN_COMMANDS_MEMBER(m_resultsEdit)
+        COMMAND_HANDLER(IDC_PICKFILE, BN_CLICKED, OnBnClickedPickfile)
     END_MSG_MAP()
 
     BOOL PreTranslateMessage(MSG* pMsg) override;
@@ -61,4 +63,10 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
 
     std::optional<std::jthread> m_enumSymbolsThread;
     CString m_enumSymbolsResult;
+
+   public:
+    LRESULT OnBnClickedPickfile(WORD /*wNotifyCode*/,
+                                WORD /*wID*/,
+                                HWND /*hWndCtl*/,
+                                BOOL& /*bHandled*/);
 };

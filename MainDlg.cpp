@@ -390,3 +390,64 @@ LRESULT CMainDlg::OnEnumSymbolsDone(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     return 0;
 }
+const COMDLG_FILTERSPEC file_types[] = {
+    {L"Supported Files (*.dll;*.exe)", L"*.dll;*.exe"},
+    {L"All Files (*.*)", L"*.*"},
+};
+
+LRESULT CMainDlg::OnBnClickedPickfile(WORD /*wNotifyCode*/,
+                                    WORD /*wID*/,
+                                    HWND /*hWndCtl*/,
+                                    BOOL& /*bHandled*/) {
+    // https://learn.microsoft.com/en-us/windows/win32/shell/common-file-dialog#basic-usage
+
+    CComPtr<IFileDialog> pfd;
+    HRESULT hr = pfd.CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER);
+
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // get options
+    DWORD dwFlags;
+    hr = pfd->GetOptions(&dwFlags);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // get shell items only for file system items.
+    hr = pfd->SetOptions(dwFlags | FOS_FORCEFILESYSTEM);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // set the file types
+    hr = pfd->SetFileTypes(ARRAYSIZE(file_types), file_types);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // the first element from the array
+    hr = pfd->SetFileTypeIndex(1);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    pfd->SetTitle(L"Browse");
+    if (FAILED(hr))
+        return E_FAIL;
+
+    // Show the dialog
+    hr = pfd->Show(this->m_hWnd);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    CComPtr<IShellItem> psiResult;
+    hr = pfd->GetResult(&psiResult);
+    if (SUCCEEDED(hr)) {
+        PWSTR pszFilePath = NULL;
+        hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+        if (SUCCEEDED(hr)) {
+            // set the file name on the textbox
+            CEdit(GetDlgItem(IDC_TARGET_EXECUTABLE)).SetWindowText(pszFilePath);
+
+            CoTaskMemFree(pszFilePath);
+        }
+    }
+    return 0;
+}

@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by windhawk-symbol-helper.rc
 //
+#define IDCANCEL2                       3
 #define IDR_MAINFRAME                   128
 #define IDD_MAINDLG                     129
 #define IDC_STATIC_ENGINE_DIR           1000
@@ -18,6 +19,7 @@
 #define IDC_STATIC_RESULTS              1011
 #define IDC_RESULTS                     1012
 #define IDC_RESULTS_PLACEHOLDER         1013
+#define IDC_PICKFILE                    1014
 
 // Next default values for new objects
 // 
@@ -25,7 +27,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         32776
-#define _APS_NEXT_CONTROL_VALUE         1014
+#define _APS_NEXT_CONTROL_VALUE         1015
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
