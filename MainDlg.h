@@ -37,13 +37,13 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_DESTROY(OnDestroy)
         MSG_WM_DROPFILES(OnDropFiles)
+        COMMAND_ID_HANDLER_EX(IDC_PICKFILE, OnPickFile)
         COMMAND_ID_HANDLER_EX(ID_APP_ABOUT, OnAppAbout)
         COMMAND_ID_HANDLER_EX(IDOK, OnOK)
         COMMAND_ID_HANDLER_EX(IDCANCEL, OnCancel)
         MESSAGE_HANDLER_EX(UWM_PROGRESS, OnProgress)
         MESSAGE_HANDLER_EX(UWM_ENUM_SYMBOLS_DONE, OnEnumSymbolsDone)
         CHAIN_COMMANDS_MEMBER(m_resultsEdit)
-        COMMAND_HANDLER(IDC_PICKFILE, BN_CLICKED, OnBnClickedPickfile)
     END_MSG_MAP()
 
     BOOL PreTranslateMessage(MSG* pMsg) override;
@@ -51,6 +51,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
     BOOL OnInitDialog(CWindow wndFocus, LPARAM lInitParam);
     void OnDestroy();
     void OnDropFiles(HDROP hDropInfo);
+    void OnPickFile(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnOK(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl);
@@ -63,10 +64,4 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
 
     std::optional<std::jthread> m_enumSymbolsThread;
     CString m_enumSymbolsResult;
-
-   public:
-    LRESULT OnBnClickedPickfile(WORD /*wNotifyCode*/,
-                                WORD /*wID*/,
-                                HWND /*hWndCtl*/,
-                                BOOL& /*bHandled*/);
 };
