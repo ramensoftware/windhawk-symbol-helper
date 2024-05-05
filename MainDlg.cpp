@@ -343,7 +343,15 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
 
                 if (threadParams.log) {
                     callbacks.notifyLog = [&logOutput](PCSTR message) {
-                        logOutput += message;
+                        CStringA messageStr = message;
+                        // Convert all newlines to CRLF and trim trailing
+                        // newlines.
+                        messageStr.Replace("\r\n", "\n");
+                        messageStr.Replace('\r', '\n');
+                        messageStr.TrimRight("\n");
+                        messageStr.Replace("\n", "\r\n");
+
+                        logOutput += messageStr;
                         logOutput += "\r\n";
                     };
                 }
