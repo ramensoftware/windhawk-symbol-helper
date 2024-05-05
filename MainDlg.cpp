@@ -48,7 +48,7 @@ InitialUIValues GetInitialUIValues() {
         values.engineDir =
             (fallbackIniFilePath2.parent_path() / expanded).c_str();
     } else {
-        values.engineDir = LR"(C:\Program Files\Windhawk\Engine\1.3.1)";
+        values.engineDir = LR"(C:\Program Files\Windhawk\Engine\1.4.1)";
     }
 
     if (GetPrivateProfileString(L"Config", L"SymbolsPath", L"", buffer,
