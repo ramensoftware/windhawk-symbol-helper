@@ -10,11 +10,10 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
                           std::stop_token* stopToken) {
     CString enumSymbolsResult;
 
-    // Use a set for sorting and to avoid duplicate chunks in the
-    // output. Duplicates can happen if the same symbol is listed with
-    // multiple types, such as SymTagFunction and SymTagPublicSymbol, or
-    // if two variants of a decorated name are identical when
-    // undecorated.
+    // Use a set for sorting and to avoid duplicate chunks in the output.
+    // Duplicates can happen if the same symbol is listed with multiple types,
+    // such as SymTagFunction and SymTagPublicSymbol, or if two variants of a
+    // decorated name are identical when undecorated.
     std::set<CString> resultListChunks;
     size_t resultListTotalLength = 0;
     size_t count = 0;
@@ -35,8 +34,7 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
         if (logOutput) {
             callbacks.notifyLog = [&logOutput](PCSTR message) {
                 CStringA messageStr = message;
-                // Convert all newlines to CRLF and trim trailing
-                // newlines.
+                // Convert all newlines to CRLF and trim trailing newlines.
                 messageStr.Replace("\r\n", "\n");
                 messageStr.Replace('\r', '\n');
                 messageStr.TrimRight("\n");
