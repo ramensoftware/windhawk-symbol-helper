@@ -27,6 +27,9 @@
     <ClCompile Include="symbol_enum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="symbols_from_binary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="view.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="symbols_from_binary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

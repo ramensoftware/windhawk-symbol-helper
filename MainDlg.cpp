@@ -3,6 +3,7 @@
 #include "MainDlg.h"
 
 #include "symbol_enum.h"
+#include "symbols_from_binary.h"
 
 #define WSH_VERSION L"1.0.3"
 
@@ -291,142 +292,40 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
         return;
     }
 
-    struct {
-        CString engineDir;
-        CString symbolsDir;
-        CString symbolServer;
-        CString targetExecutable;
-        bool undecorated;
-        bool decorated;
-        bool log;
-    } threadParams;
+    SymbolsFromBinaryOptions options;
 
-    GetDlgItemText(IDC_ENGINE_DIR, threadParams.engineDir);
-    GetDlgItemText(IDC_SYMBOLS_DIR, threadParams.symbolsDir);
-    GetDlgItemText(IDC_SYMBOL_SERVER, threadParams.symbolServer);
-    GetDlgItemText(IDC_TARGET_EXECUTABLE, threadParams.targetExecutable);
-    threadParams.undecorated =
+    GetDlgItemText(IDC_ENGINE_DIR, options.engineDir);
+    GetDlgItemText(IDC_SYMBOLS_DIR, options.symbolsDir);
+    GetDlgItemText(IDC_SYMBOL_SERVER, options.symbolServer);
+    GetDlgItemText(IDC_TARGET_EXECUTABLE, options.targetExecutable);
+    options.undecorated =
         CButton(GetDlgItem(IDC_UNDECORATED)).GetCheck() != BST_UNCHECKED;
-    threadParams.decorated =
+    options.decorated =
         CButton(GetDlgItem(IDC_DECORATED)).GetCheck() != BST_UNCHECKED;
-    threadParams.log = CButton(GetDlgItem(IDC_LOG)).GetCheck() != BST_UNCHECKED;
+    bool log = CButton(GetDlgItem(IDC_LOG)).GetCheck() != BST_UNCHECKED;
 
     SetDlgItemText(IDOK, L"Cancel");
 
-    m_enumSymbolsThread = std::jthread([threadParams = std::move(threadParams),
-                                        &enumSymbolsResult =
-                                            m_enumSymbolsResult,
-                                        hWnd =
-                                            m_hWnd](std::stop_token stopToken) {
-        CStringA logOutput;
+    m_enumSymbolsThread = std::jthread(
+        [options = std::move(options), &enumSymbolsResult = m_enumSymbolsResult,
+         hWnd = m_hWnd, log](std::stop_token stopToken) {
+            CStringA logOutput;
 
-        try {
-            // Use a set for sorting and to avoid duplicate chunks in the
-            // output. Duplicates can happen if the same symbol is listed with
-            // multiple types, such as SymTagFunction and SymTagPublicSymbol, or
-            // if two variants of a decorated name are identical when
-            // undecorated.
-            std::set<CString> resultListChunks;
-            size_t resultListTotalLength = 0;
-            size_t count = 0;
-
-            {
-                SymbolEnum::Callbacks callbacks{
-                    .queryCancel =
-                        [&stopToken]() { return stopToken.stop_requested(); },
-                    .notifyProgress =
-                        [hWnd](int progress) {
-                            CWindow(hWnd).PostMessage(UWM_PROGRESS,
-                                                      (WPARAM)progress);
-                        },
-                };
-
-                if (threadParams.log) {
-                    callbacks.notifyLog = [&logOutput](PCSTR message) {
-                        CStringA messageStr = message;
-                        // Convert all newlines to CRLF and trim trailing
-                        // newlines.
-                        messageStr.Replace("\r\n", "\n");
-                        messageStr.Replace('\r', '\n');
-                        messageStr.TrimRight("\n");
-                        messageStr.Replace("\n", "\r\n");
-
-                        logOutput += messageStr;
-                        logOutput += "\r\n";
-                    };
-                }
-
-                CString addressPrefix;
-                CString chunk;
-
-                SymbolEnum symbolEnum(threadParams.targetExecutable.GetString(),
-                                      nullptr,
-                                      threadParams.engineDir.GetString(),
-                                      threadParams.symbolsDir.GetString(),
-                                      threadParams.symbolServer.GetString(),
-                                      threadParams.undecorated
-                                          ? SymbolEnum::UndecorateMode::Default
-                                          : SymbolEnum::UndecorateMode::None,
-                                      callbacks);
-
-                while (auto iter = symbolEnum.GetNextSymbol()) {
-                    if (stopToken.stop_requested()) {
-                        throw std::runtime_error("Canceled");
-                    }
-
-                    if (!threadParams.decorated && !threadParams.undecorated) {
-                        count++;
-                        continue;
-                    }
-
-                    if (!iter->nameDecorated && !iter->name) {
-                        continue;
-                    }
-
-                    addressPrefix.Format(L"[%08" TEXT(PRIXPTR) L"] ",
-                                         iter->address);
-
-                    chunk.Empty();
-
-                    if (threadParams.decorated) {
-                        chunk += addressPrefix;
-                        chunk += iter->nameDecorated ? iter->nameDecorated
-                                                     : L"<no-decorated-name>";
-                        chunk += L"\r\n";
-                    }
-
-                    if (threadParams.undecorated) {
-                        chunk += addressPrefix;
-                        chunk +=
-                            iter->name ? iter->name : L"<no-undecorated-name>";
-                        chunk += L"\r\n";
-                    }
-
-                    auto [_, inserted] = resultListChunks.insert(chunk);
-                    if (inserted) {
-                        resultListTotalLength += chunk.GetLength();
-                        count++;
-                    }
-                }
+            try {
+                enumSymbolsResult = SymbolsFromBinary(
+                    std::move(options), log ? &logOutput : nullptr,
+                    [hWnd](int progress) {
+                        CWindow(hWnd).PostMessage(UWM_PROGRESS,
+                                                  (WPARAM)progress);
+                    },
+                    &stopToken);
+            } catch (const std::exception& e) {
+                enumSymbolsResult.Format(L"Error: %S\r\n%S", e.what(),
+                                         logOutput.GetString());
             }
 
-            enumSymbolsResult.Preallocate(
-                logOutput.GetLength() +
-                static_cast<int>(resultListTotalLength) + 128);
-
-            enumSymbolsResult.Format(L"Found %zu symbols\r\n%S", count,
-                                     logOutput.GetString());
-
-            for (const auto& chunk : resultListChunks) {
-                enumSymbolsResult += chunk;
-            }
-        } catch (const std::exception& e) {
-            enumSymbolsResult.Format(L"Error: %S\r\n%S", e.what(),
-                                     logOutput.GetString());
-        }
-
-        CWindow(hWnd).PostMessage(UWM_ENUM_SYMBOLS_DONE);
-    });
+            CWindow(hWnd).PostMessage(UWM_ENUM_SYMBOLS_DONE);
+        });
 }
 
 void CMainDlg::OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl) {

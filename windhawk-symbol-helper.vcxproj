@@ -226,6 +226,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="symbols_from_binary.cpp" />
     <ClCompile Include="symbol_enum.cpp" />
     <ClCompile Include="windhawk-symbol-helper.cpp" />
   </ItemGroup>
@@ -234,6 +235,7 @@
     <ClInclude Include="MainDlg.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="symbols_from_binary.h" />
     <ClInclude Include="symbol_enum.h" />
     <ClInclude Include="view.h" />
   </ItemGroup>
