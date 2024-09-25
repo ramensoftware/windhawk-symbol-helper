@@ -66,7 +66,7 @@ void LogSymbolServerEvent(PCSTR msg) {
         len--;
     }
 
-    VERBOSE(L"%.*S", len, p);
+    VERBOSE(L"%.*S", static_cast<int>(len), p);
 }
 
 int PercentFromSymbolServerEvent(PCSTR msg) {
