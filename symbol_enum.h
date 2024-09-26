@@ -39,10 +39,18 @@ class SymbolEnum {
    private:
     wil::com_ptr<IDiaDataSource> LoadMsdia();
 
+    static constexpr enum SymTagEnum kSymTags[] = {
+        SymTagPublicSymbol,
+        SymTagFunction,
+        SymTagData,
+    };
+
     HMODULE m_moduleBase;
     UndecorateMode m_undecorateMode;
     wil::unique_hmodule m_msdiaModule;
+    wil::com_ptr<IDiaSymbol> m_diaGlobal;
     wil::com_ptr<IDiaEnumSymbols> m_diaSymbols;
+    size_t m_symTagIndex = 0;
     wil::unique_bstr m_currentSymbolName;
     wil::unique_bstr m_currentDecoratedSymbolName;
 };

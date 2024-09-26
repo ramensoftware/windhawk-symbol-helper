@@ -371,11 +371,10 @@ SymbolEnum::SymbolEnum(PCWSTR modulePath,
     wil::com_ptr<IDiaSession> diaSession;
     THROW_IF_FAILED(diaSource->openSession(&diaSession));
 
-    wil::com_ptr<IDiaSymbol> diaGlobal;
-    THROW_IF_FAILED(diaSession->get_globalScope(&diaGlobal));
+    THROW_IF_FAILED(diaSession->get_globalScope(&m_diaGlobal));
 
     THROW_IF_FAILED(
-        diaGlobal->findChildren(SymTagNull, nullptr, nsNone, &m_diaSymbols));
+        m_diaGlobal->findChildren(kSymTags[0], nullptr, nsNone, &m_diaSymbols));
 }
 
 std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
@@ -386,6 +385,13 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
         THROW_IF_FAILED(hr);
 
         if (hr == S_FALSE || count == 0) {
+            m_symTagIndex++;
+            if (m_symTagIndex < ARRAYSIZE(kSymTags)) {
+                THROW_IF_FAILED(m_diaGlobal->findChildren(
+                    kSymTags[m_symTagIndex], nullptr, nsNone, &m_diaSymbols));
+                continue;
+            }
+
             return std::nullopt;
         }
 
