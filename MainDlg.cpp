@@ -329,7 +329,26 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
 }
 
 void CMainDlg::OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl) {
-    DestroyWindow();
+    int result = IDYES;
+
+    TASKDIALOGCONFIG taskDialogConfig{
+        .cbSize = sizeof(taskDialogConfig),
+        .hwndParent = m_hWnd,
+        .hInstance = _Module.GetModuleInstance(),
+        .dwFlags =
+            TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW,
+        .dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
+        .pszWindowTitle = L"Exit",
+        .pszMainIcon = MAKEINTRESOURCE(IDR_MAINFRAME),
+        .pszContent = L"Are you sure you want to exit?",
+        .nDefaultButton = IDNO,
+    };
+
+    if (FAILED(::TaskDialogIndirect(&taskDialogConfig, &result, nullptr,
+                                    nullptr)) ||
+        result == IDYES) {
+        DestroyWindow();
+    }
 }
 
 LRESULT CMainDlg::OnProgress(UINT uMsg, WPARAM wParam, LPARAM lParam) {
