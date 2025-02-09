@@ -182,9 +182,9 @@ void CMainDlg::OnDestroy() {
 }
 
 void CMainDlg::OnDropFiles(HDROP hDropInfo) {
-    if (DragQueryFile(hDropInfo, 0xFFFFFFFF, NULL, 0) == 1) {
+    if (::DragQueryFile(hDropInfo, 0xFFFFFFFF, NULL, 0) == 1) {
         WCHAR fileName[MAX_PATH];
-        DragQueryFile(hDropInfo, 0, fileName, MAX_PATH);
+        ::DragQueryFile(hDropInfo, 0, fileName, MAX_PATH);
 
         SetDlgItemText(IDC_TARGET_EXECUTABLE, fileName);
     } else {
@@ -192,7 +192,7 @@ void CMainDlg::OnDropFiles(HDROP hDropInfo) {
                    MB_ICONINFORMATION);
     }
 
-    DragFinish(hDropInfo);
+    ::DragFinish(hDropInfo);
 }
 
 void CMainDlg::OnPickFile(UINT uNotifyCode, int nID, CWindow wndCtl) {
