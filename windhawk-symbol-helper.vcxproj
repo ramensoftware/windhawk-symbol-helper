@@ -118,6 +118,9 @@
       <TypeLibraryName>$(IntDir)/windhawk-symbol-helper.tlb</TypeLibraryName>
       <DllDataFileName />
     </Midl>
+    <Manifest>
+      <AdditionalManifestFiles>res/manifest.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -152,6 +155,9 @@
       <TypeLibraryName>$(IntDir)/windhawk-symbol-helper.tlb</TypeLibraryName>
       <DllDataFileName />
     </Midl>
+    <Manifest>
+      <AdditionalManifestFiles>res/manifest.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -185,6 +191,9 @@
       <TypeLibraryName>$(IntDir)/windhawk-symbol-helper.tlb</TypeLibraryName>
       <DllDataFileName />
     </Midl>
+    <Manifest>
+      <AdditionalManifestFiles>res/manifest.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -217,6 +226,9 @@
       <TypeLibraryName>$(IntDir)/windhawk-symbol-helper.tlb</TypeLibraryName>
       <DllDataFileName />
     </Midl>
+    <Manifest>
+      <AdditionalManifestFiles>res/manifest.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MainDlg.cpp" />
