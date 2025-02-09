@@ -5,7 +5,7 @@
 #include "symbol_enum.h"
 #include "symbols_from_binary.h"
 
-#define WSH_VERSION L"1.0.5"
+#define WSH_VERSION L"1.0.6"
 
 namespace {
 
