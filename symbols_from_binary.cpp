@@ -66,7 +66,7 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
                 continue;
             }
 
-            if (!iter->nameDecorated && !iter->name) {
+            if (!iter->name && !iter->nameUndecorated) {
                 continue;
             }
 
@@ -76,14 +76,20 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
 
             if (options.decorated) {
                 chunk += addressPrefix;
-                chunk += iter->nameDecorated ? iter->nameDecorated
-                                             : L"<no-decorated-name>";
+                chunk += iter->name ? iter->name : L"<no-decorated-name>";
                 chunk += L"\r\n";
             }
 
             if (options.undecorated) {
                 chunk += addressPrefix;
-                chunk += iter->name ? iter->name : L"<no-undecorated-name>";
+                if (iter->nameUndecorated) {
+                    if (iter->nameUndecoratedPrefix) {
+                        chunk += iter->nameUndecoratedPrefix;
+                    }
+                    chunk += iter->nameUndecorated;
+                } else {
+                    chunk += L"<no-undecorated-name>";
+                }
                 chunk += L"\r\n";
             }
 

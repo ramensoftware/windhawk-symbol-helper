@@ -402,6 +402,14 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
             continue;  // no RVA
         }
 
+        hr = diaSymbol->get_name(&m_currentSymbolName);
+        THROW_IF_FAILED(hr);
+        if (hr == S_FALSE) {
+            m_currentSymbolName.reset();  // no name
+        }
+
+        PCWSTR currentSymbolNameUndecoratedPrefix = nullptr;
+
         // Temporary compatibility code.
         if (m_undecorateMode == UndecorateMode::OldVersionCompatible) {
             // get_undecoratedName uses 0x20800 as flags:
@@ -411,29 +419,59 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
             // the output. For compatibility, use get_undecoratedNameEx and
             // don't pass this flag.
             constexpr DWORD kUndname32BitDecode = 0x800;
-            hr = diaSymbol->get_undecoratedNameEx(kUndname32BitDecode,
-                                                  &m_currentSymbolName);
+            hr = diaSymbol->get_undecoratedNameEx(
+                kUndname32BitDecode, &m_currentSymbolNameUndecorated);
         } else if (m_undecorateMode == UndecorateMode::Default) {
-            hr = diaSymbol->get_undecoratedName(&m_currentSymbolName);
+            hr =
+                diaSymbol->get_undecoratedName(&m_currentSymbolNameUndecorated);
         } else {
-            m_currentSymbolName.reset();
+            m_currentSymbolNameUndecorated.reset();
             hr = S_OK;
         }
         THROW_IF_FAILED(hr);
         if (hr == S_FALSE) {
-            m_currentSymbolName.reset();  // no name
-        }
-
-        hr = diaSymbol->get_name(&m_currentDecoratedSymbolName);
-        THROW_IF_FAILED(hr);
-        if (hr == S_FALSE) {
-            m_currentDecoratedSymbolName.reset();  // no name
+            m_currentSymbolNameUndecorated.reset();  // no name
+        } else if (m_currentSymbolNameUndecorated) {
+            // For ARM64EC binaries, functions with native and ARM64EC versions
+            // have the same undecorated names. The only difference between them
+            // is the "$$h" tag. This tag is mentioned here:
+            // https://learn.microsoft.com/en-us/cpp/build/reference/decorated-names?view=msvc-170
+            // An example from comctl32.dll version 6.10.22621.4825:
+            // Decorated, native:
+            // ??1CLink@@UEAA@XZ
+            // Decorated, ARM64EC:
+            // ??1CLink@@$$hUEAA@XZ
+            // Undecorated (in both cases):
+            // public: virtual __cdecl CLink::~CLink(void)
+            //
+            // To be able to disambiguate between these two undecorated names,
+            // we add a prefix to the ARM64EC undecorated name. In the above
+            // example, it becomes:
+            // ARM64EC\public: virtual __cdecl CLink::~CLink(void)
+            //
+            // The "\" symbol was chosen after looking for an ASCII character
+            // that's not being used in symbol names. It looks like the only
+            // three such characters in the ASCII range of 0x21-0x7E are: " ; \.
+            // Note: The # character doesn't seem to be used outside of ARM64
+            // symbols, but it's being used extensively as an ARM64-related
+            // marker.
+            //
+            // Below is a simplistic check that only checks that the "$$h"
+            // string is present in the symbol name. Hopefully it's good enough
+            // so that full parsing of the decorated name is not needed.
+            bool isArm64Ec =
+                m_currentSymbolName &&
+                wcsstr(m_currentSymbolName.get(), L"$$h") != nullptr;
+            if (isArm64Ec) {
+                currentSymbolNameUndecoratedPrefix = L"ARM64EC\\";
+            }
         }
 
         return SymbolEnum::Symbol{
             reinterpret_cast<void*>(reinterpret_cast<BYTE*>(m_moduleBase) +
                                     currentSymbolRva),
-            m_currentSymbolName.get(), m_currentDecoratedSymbolName.get()};
+            m_currentSymbolName.get(), currentSymbolNameUndecoratedPrefix,
+            m_currentSymbolNameUndecorated.get()};
     }
 }
 

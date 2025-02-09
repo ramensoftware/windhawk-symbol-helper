@@ -31,7 +31,8 @@ class SymbolEnum {
     struct Symbol {
         void* address;
         PCWSTR name;
-        PCWSTR nameDecorated;
+        PCWSTR nameUndecoratedPrefix;
+        PCWSTR nameUndecorated;
     };
 
     std::optional<Symbol> GetNextSymbol();
@@ -52,5 +53,5 @@ class SymbolEnum {
     wil::com_ptr<IDiaEnumSymbols> m_diaSymbols;
     size_t m_symTagIndex = 0;
     wil::unique_bstr m_currentSymbolName;
-    wil::unique_bstr m_currentDecoratedSymbolName;
+    wil::unique_bstr m_currentSymbolNameUndecorated;
 };
