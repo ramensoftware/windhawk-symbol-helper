@@ -28,7 +28,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         DLGRESIZE_CONTROL(IDC_RESULTS, DLSZ_SIZE_X | DLSZ_SIZE_Y)
         DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y)
         DLGRESIZE_CONTROL(ID_APP_ABOUT, DLSZ_CENTER_X | DLSZ_MOVE_Y)
-        DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_X | DLSZ_MOVE_Y)
+        DLGRESIZE_CONTROL(ID_APP_EXIT, DLSZ_MOVE_X | DLSZ_MOVE_Y)
     END_DLGRESIZE_MAP()
 
    private:
@@ -39,6 +39,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         MSG_WM_DROPFILES(OnDropFiles)
         COMMAND_ID_HANDLER_EX(IDC_PICKFILE, OnPickFile)
         COMMAND_ID_HANDLER_EX(ID_APP_ABOUT, OnAppAbout)
+        COMMAND_ID_HANDLER_EX(ID_APP_EXIT, OnAppExit)
         COMMAND_ID_HANDLER_EX(IDOK, OnOK)
         COMMAND_ID_HANDLER_EX(IDCANCEL, OnCancel)
         MESSAGE_HANDLER_EX(UWM_PROGRESS, OnProgress)
@@ -53,6 +54,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
     void OnDropFiles(HDROP hDropInfo);
     void OnPickFile(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl);
+    void OnAppExit(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnOK(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl);
     LRESULT OnProgress(UINT uMsg, WPARAM wParam, LPARAM lParam);

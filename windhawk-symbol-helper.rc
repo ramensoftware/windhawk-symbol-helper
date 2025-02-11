@@ -67,7 +67,7 @@ FONT 9, "Segoe UI", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "Get &symbols",IDOK,7,275,50,14
     PUSHBUTTON      "&About",ID_APP_ABOUT,114,275,50,14
-    PUSHBUTTON      "Close",IDCANCEL,220,275,50,14
+    PUSHBUTTON      "Exi&t",ID_APP_EXIT,220,275,50,14
     LTEXT           "&Engine folder that contains symsrv_windhawk.dll and msdia140_windhawk.dll:",IDC_STATIC_ENGINE_DIR,7,7,263,8
     EDITTEXT        IDC_ENGINE_DIR,7,17,263,12,ES_AUTOHSCROLL
     LTEXT           "Symbols &folder:",IDC_STATIC_SYMBOLS_DIR,7,34,263,8

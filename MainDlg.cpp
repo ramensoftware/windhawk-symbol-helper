@@ -289,6 +289,10 @@ void CMainDlg::OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl) {
     ::TaskDialogIndirect(&taskDialogConfig, nullptr, nullptr, nullptr);
 }
 
+void CMainDlg::OnAppExit(UINT uNotifyCode, int nID, CWindow wndCtl) {
+    DestroyWindow();
+}
+
 void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
     if (m_enumSymbolsThread) {
         m_enumSymbolsThread->request_stop();
