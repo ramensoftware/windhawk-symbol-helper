@@ -178,6 +178,10 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
 void CMainDlg::OnDestroy() {
     m_enumSymbolsThread.reset();
 
+    CMessageLoop* pLoop = _Module.GetMessageLoop();
+    ATLASSERT(pLoop != nullptr);
+    pLoop->RemoveMessageFilter(this);
+
     PostQuitMessage(0);
 }
 
