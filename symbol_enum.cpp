@@ -116,57 +116,55 @@ int PercentFromSymbolServerEvent(PCSTR msg) {
 void** FindImportPtr(HMODULE hFindInModule,
                      PCSTR pModuleName,
                      PCSTR pImportName) {
-    IMAGE_DOS_HEADER* pDosHeader;
-    IMAGE_NT_HEADERS* pNtHeader;
-    ULONG_PTR ImageBase;
-    IMAGE_IMPORT_DESCRIPTOR* pImportDescriptor;
-    ULONG_PTR* pOriginalFirstThunk;
-    ULONG_PTR* pFirstThunk;
-    ULONG_PTR ImageImportByName;
+    IMAGE_DOS_HEADER* pDosHeader = (IMAGE_DOS_HEADER*)hFindInModule;
+    IMAGE_NT_HEADERS* pNtHeader =
+        (IMAGE_NT_HEADERS*)((char*)pDosHeader + pDosHeader->e_lfanew);
 
-    // Init
-    pDosHeader = (IMAGE_DOS_HEADER*)hFindInModule;
-    pNtHeader = (IMAGE_NT_HEADERS*)((char*)pDosHeader + pDosHeader->e_lfanew);
-
-    if (!pNtHeader->OptionalHeader.DataDirectory[1].VirtualAddress)
+    if (pNtHeader->OptionalHeader.NumberOfRvaAndSizes <=
+            IMAGE_DIRECTORY_ENTRY_IMPORT ||
+        !pNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]
+             .VirtualAddress) {
         return nullptr;
+    }
 
-    ImageBase = (ULONG_PTR)hFindInModule;
-    pImportDescriptor =
+    ULONG_PTR ImageBase = (ULONG_PTR)hFindInModule;
+    IMAGE_IMPORT_DESCRIPTOR* pImportDescriptor =
         (IMAGE_IMPORT_DESCRIPTOR*)(ImageBase +
-                                   pNtHeader->OptionalHeader.DataDirectory[1]
+                                   pNtHeader->OptionalHeader
+                                       .DataDirectory
+                                           [IMAGE_DIRECTORY_ENTRY_IMPORT]
                                        .VirtualAddress);
 
-    // Search!
     while (pImportDescriptor->OriginalFirstThunk) {
-        if (lstrcmpiA((char*)(ImageBase + pImportDescriptor->Name),
-                      pModuleName) == 0) {
-            pOriginalFirstThunk =
-                (ULONG_PTR*)(ImageBase + pImportDescriptor->OriginalFirstThunk);
-            ImageImportByName = *pOriginalFirstThunk;
+        if (_stricmp((char*)(ImageBase + pImportDescriptor->Name),
+                     pModuleName) == 0) {
+            IMAGE_THUNK_DATA* pOriginalFirstThunk =
+                (IMAGE_THUNK_DATA*)(ImageBase +
+                                    pImportDescriptor->OriginalFirstThunk);
+            IMAGE_THUNK_DATA* pFirstThunk =
+                (IMAGE_THUNK_DATA*)(ImageBase + pImportDescriptor->FirstThunk);
 
-            pFirstThunk =
-                (ULONG_PTR*)(ImageBase + pImportDescriptor->FirstThunk);
-
-            while (ImageImportByName) {
-                if (!(ImageImportByName & IMAGE_ORDINAL_FLAG)) {
+            while (ULONG_PTR ImageImportByName =
+                       pOriginalFirstThunk->u1.Function) {
+                if (!IMAGE_SNAP_BY_ORDINAL(ImageImportByName)) {
                     if ((ULONG_PTR)pImportName & ~0xFFFF) {
                         ImageImportByName += sizeof(WORD);
 
-                        if (lstrcmpA((char*)(ImageBase + ImageImportByName),
-                                     pImportName) == 0)
+                        if (strcmp((char*)(ImageBase + ImageImportByName),
+                                   pImportName) == 0) {
                             return (void**)pFirstThunk;
+                        }
                     }
                 } else {
-                    if (((ULONG_PTR)pImportName & ~0xFFFF) == 0)
-                        if ((ImageImportByName & 0xFFFF) ==
-                            (ULONG_PTR)pImportName)
+                    if (((ULONG_PTR)pImportName & ~0xFFFF) == 0) {
+                        if (IMAGE_ORDINAL(ImageImportByName) ==
+                            (ULONG_PTR)pImportName) {
                             return (void**)pFirstThunk;
+                        }
+                    }
                 }
 
                 pOriginalFirstThunk++;
-                ImageImportByName = *pOriginalFirstThunk;
-
                 pFirstThunk++;
             }
         }
