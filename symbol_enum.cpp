@@ -321,6 +321,52 @@ HMODULE WINAPI MsdiaLoadLibraryExWHook(LPCWSTR lpLibFileName,
     }
 }
 
+template <typename IMAGE_NT_HEADERS_T, typename IMAGE_LOAD_CONFIG_DIRECTORY_T>
+std::optional<std::span<const SymbolEnum::IMAGE_CHPE_RANGE_ENTRY>>
+GetChpeRanges(const IMAGE_DOS_HEADER* dosHeader,
+              const IMAGE_NT_HEADERS_T* ntHeader) {
+    auto* opt = &ntHeader->OptionalHeader;
+
+    if (opt->NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG ||
+        !opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress) {
+        return std::nullopt;
+    }
+
+    DWORD directorySize =
+        opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size;
+
+    auto* cfg =
+        (const IMAGE_LOAD_CONFIG_DIRECTORY_T*)((const char*)dosHeader +
+                                               opt->DataDirectory
+                                                   [IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG]
+                                                       .VirtualAddress);
+
+    constexpr DWORD kMinSize =
+        offsetof(IMAGE_LOAD_CONFIG_DIRECTORY_T, CHPEMetadataPointer) +
+        sizeof(IMAGE_LOAD_CONFIG_DIRECTORY_T::CHPEMetadataPointer);
+
+    if (directorySize < kMinSize || cfg->Size < kMinSize) {
+        return std::nullopt;
+    }
+
+    if (!cfg->CHPEMetadataPointer) {
+        return std::nullopt;
+    }
+
+    // Either IMAGE_CHPE_METADATA_X86 or IMAGE_ARM64EC_METADATA.
+    const void* metadata =
+        (const char*)dosHeader + cfg->CHPEMetadataPointer - opt->ImageBase;
+
+    ULONG codeMapRva = ((const ULONG*)metadata)[1];
+    ULONG codeMapCount = ((const ULONG*)metadata)[2];
+
+    auto* codeMap =
+        (const SymbolEnum::IMAGE_CHPE_RANGE_ENTRY*)((const char*)dosHeader +
+                                                    codeMapRva);
+
+    return std::span(codeMap, codeMapCount);
+}
+
 }  // namespace
 
 SymbolEnum::SymbolEnum(HMODULE moduleBase,
@@ -347,6 +393,8 @@ SymbolEnum::SymbolEnum(PCWSTR modulePath,
                        UndecorateMode undecorateMode,
                        Callbacks callbacks)
     : m_moduleBase(moduleBase), m_undecorateMode(undecorateMode) {
+    InitModuleInfo(modulePath);
+
 #ifdef _WIN64
     g_enginePath = std::filesystem::path(enginePath) / L"64";
 #else
@@ -406,7 +454,8 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
             m_currentSymbolName.reset();  // no name
         }
 
-        PCWSTR currentSymbolNameUndecoratedPrefix = nullptr;
+        PCWSTR currentSymbolNameUndecoratedPrefix1 = L"";
+        PCWSTR currentSymbolNameUndecoratedPrefix2 = L"";
 
         // Temporary compatibility code.
         if (m_undecorateMode == UndecorateMode::OldVersionCompatible) {
@@ -430,6 +479,40 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
         if (hr == S_FALSE) {
             m_currentSymbolNameUndecorated.reset();  // no name
         } else if (m_currentSymbolNameUndecorated) {
+            // For hybrid binaries, add an arch=x\ prefix.
+            if (m_moduleInfo.isHybrid) {
+                bool is32Bit =
+                    m_moduleInfo.magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC;
+                for (const auto& range : m_moduleInfo.chpeRanges) {
+                    ULONG start = is32Bit ? (range.StartOffset & ~1)
+                                          : (range.StartOffset & ~3);
+                    if (currentSymbolRva < start ||
+                        currentSymbolRva >= start + range.Length) {
+                        continue;
+                    }
+
+                    if (is32Bit) {
+                        constexpr PCWSTR prefixes[] = {
+                            L"arch=x86\\",
+                            L"arch=ARM64\\",
+                        };
+                        currentSymbolNameUndecoratedPrefix1 =
+                            prefixes[range.StartOffset & 1];
+                    } else {
+                        constexpr PCWSTR prefixes[] = {
+                            L"arch=ARM64\\",
+                            L"arch=ARM64EC\\",
+                            L"arch=x64\\",
+                            L"arch=3\\",
+                        };
+                        currentSymbolNameUndecoratedPrefix1 =
+                            prefixes[range.StartOffset & 3];
+                    }
+
+                    break;
+                }
+            }
+
             // For ARM64EC binaries, functions with native and ARM64EC versions
             // have the same undecorated names. The only difference between them
             // is the "$$h" tag. This tag is mentioned here:
@@ -445,14 +528,14 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
             // To be able to disambiguate between these two undecorated names,
             // we add a prefix to the ARM64EC undecorated name. In the above
             // example, it becomes:
-            // ARM64EC\public: virtual __cdecl CLink::~CLink(void)
+            // tag=ARM64EC\public: virtual __cdecl CLink::~CLink(void)
             //
             // The "\" symbol was chosen after looking for an ASCII character
             // that's not being used in symbol names. It looks like the only
             // three such characters in the ASCII range of 0x21-0x7E are: " ; \.
             // Note: The # character doesn't seem to be used outside of ARM64
             // symbols, but it's being used extensively as an ARM64-related
-            // marker.
+            // marker in hybrid binaries.
             //
             // Below is a simplistic check that only checks that the "$$h"
             // string is present in the symbol name. Hopefully it's good enough
@@ -461,15 +544,56 @@ std::optional<SymbolEnum::Symbol> SymbolEnum::GetNextSymbol() {
                 m_currentSymbolName &&
                 wcsstr(m_currentSymbolName.get(), L"$$h") != nullptr;
             if (isArm64Ec) {
-                currentSymbolNameUndecoratedPrefix = L"ARM64EC\\";
+                currentSymbolNameUndecoratedPrefix2 = L"tag=ARM64EC\\";
             }
         }
 
         return SymbolEnum::Symbol{
             reinterpret_cast<void*>(reinterpret_cast<BYTE*>(m_moduleBase) +
                                     currentSymbolRva),
-            m_currentSymbolName.get(), currentSymbolNameUndecoratedPrefix,
+            m_currentSymbolName.get(), currentSymbolNameUndecoratedPrefix1,
+            currentSymbolNameUndecoratedPrefix2,
             m_currentSymbolNameUndecorated.get()};
+    }
+}
+
+void SymbolEnum::InitModuleInfo(PCWSTR modulePath) {
+    wil::unique_hmodule moduleLoadedAsImageResources(
+        LoadLibraryEx(modulePath, nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE));
+    THROW_LAST_ERROR_IF_NULL(moduleLoadedAsImageResources);
+
+    auto* dosHeader =
+        (const IMAGE_DOS_HEADER*)((ULONG_PTR)
+                                      moduleLoadedAsImageResources.get() &
+                                  ~3);
+    auto* ntHeader =
+        (const IMAGE_NT_HEADERS*)((const char*)dosHeader + dosHeader->e_lfanew);
+    WORD magic = ntHeader->OptionalHeader.Magic;
+
+    std::optional<std::span<const IMAGE_CHPE_RANGE_ENTRY>> chpeRanges;
+    switch (magic) {
+        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            chpeRanges = GetChpeRanges<IMAGE_NT_HEADERS32,
+                                       IMAGE_LOAD_CONFIG_DIRECTORY32>(
+                dosHeader, (const IMAGE_NT_HEADERS32*)ntHeader);
+            break;
+
+        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            chpeRanges = GetChpeRanges<IMAGE_NT_HEADERS64,
+                                       IMAGE_LOAD_CONFIG_DIRECTORY64>(
+                dosHeader, (const IMAGE_NT_HEADERS64*)ntHeader);
+            break;
+    }
+
+    m_moduleInfo.moduleLoadedAsImageResources =
+        std::move(moduleLoadedAsImageResources);
+    m_moduleInfo.magic = magic;
+
+    if (chpeRanges) {
+        m_moduleInfo.isHybrid = true;
+        m_moduleInfo.chpeRanges = *chpeRanges;
+    } else {
+        m_moduleInfo.isHybrid = false;
     }
 }
 

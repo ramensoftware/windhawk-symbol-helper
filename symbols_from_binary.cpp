@@ -83,9 +83,8 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
             if (options.undecorated) {
                 chunk += addressPrefix;
                 if (iter->nameUndecorated) {
-                    if (iter->nameUndecoratedPrefix) {
-                        chunk += iter->nameUndecoratedPrefix;
-                    }
+                    chunk += iter->nameUndecoratedPrefix1;
+                    chunk += iter->nameUndecoratedPrefix2;
                     chunk += iter->nameUndecorated;
                 } else {
                     chunk += L"<no-undecorated-name>";

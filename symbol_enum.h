@@ -31,13 +31,28 @@ class SymbolEnum {
     struct Symbol {
         void* address;
         PCWSTR name;
-        PCWSTR nameUndecoratedPrefix;
+        PCWSTR nameUndecoratedPrefix1;
+        PCWSTR nameUndecoratedPrefix2;
         PCWSTR nameUndecorated;
     };
 
     std::optional<Symbol> GetNextSymbol();
 
+    // https://ntdoc.m417z.com/image_chpe_range_entry
+    typedef struct _IMAGE_CHPE_RANGE_ENTRY {
+        union {
+            ULONG StartOffset;
+            struct {
+                ULONG NativeCode : 1;
+                ULONG AddressBits : 31;
+            } DUMMYSTRUCTNAME;
+        } DUMMYUNIONNAME;
+
+        ULONG Length;
+    } IMAGE_CHPE_RANGE_ENTRY, *PIMAGE_CHPE_RANGE_ENTRY;
+
    private:
+    void InitModuleInfo(PCWSTR modulePath);
     wil::com_ptr<IDiaDataSource> LoadMsdia();
 
     static constexpr enum SymTagEnum kSymTags[] = {
@@ -46,8 +61,16 @@ class SymbolEnum {
         SymTagData,
     };
 
+    struct ModuleInfo {
+        wil::unique_hmodule moduleLoadedAsImageResources;
+        WORD magic;
+        bool isHybrid;
+        std::span<const IMAGE_CHPE_RANGE_ENTRY> chpeRanges;
+    };
+
     HMODULE m_moduleBase;
     UndecorateMode m_undecorateMode;
+    ModuleInfo m_moduleInfo;
     wil::unique_hmodule m_msdiaModule;
     wil::com_ptr<IDiaSymbol> m_diaGlobal;
     wil::com_ptr<IDiaEnumSymbols> m_diaSymbols;

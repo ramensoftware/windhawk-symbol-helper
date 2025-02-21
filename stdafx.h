@@ -44,6 +44,7 @@ extern CAppModule _Module;
 #include <functional>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <thread>
 
