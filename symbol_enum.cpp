@@ -585,13 +585,11 @@ void SymbolEnum::InitModuleInfo(PCWSTR modulePath) {
             break;
     }
 
-    m_moduleInfo.moduleLoadedAsImageResources =
-        std::move(moduleLoadedAsImageResources);
     m_moduleInfo.magic = magic;
 
     if (chpeRanges) {
         m_moduleInfo.isHybrid = true;
-        m_moduleInfo.chpeRanges = *chpeRanges;
+        m_moduleInfo.chpeRanges.assign(chpeRanges->begin(), chpeRanges->end());
     } else {
         m_moduleInfo.isHybrid = false;
     }
@@ -620,9 +618,9 @@ wil::com_ptr<IDiaDataSource> SymbolEnum::LoadMsdia() {
         FindImportPtr(m_msdiaModule.get(), "kernel32.dll", "LoadLibraryExW");
 
     DWORD dwOldProtect;
-    THROW_IF_WIN32_BOOL_FALSE(
-        VirtualProtect(msdiaLoadLibraryExWPtr, sizeof(*msdiaLoadLibraryExWPtr),
-                       PAGE_EXECUTE_READWRITE, &dwOldProtect));
+    THROW_IF_WIN32_BOOL_FALSE(VirtualProtect(msdiaLoadLibraryExWPtr,
+                                             sizeof(*msdiaLoadLibraryExWPtr),
+                                             PAGE_READWRITE, &dwOldProtect));
     *msdiaLoadLibraryExWPtr = MsdiaLoadLibraryExWHook;
     THROW_IF_WIN32_BOOL_FALSE(VirtualProtect(msdiaLoadLibraryExWPtr,
                                              sizeof(*msdiaLoadLibraryExWPtr),

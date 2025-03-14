@@ -62,10 +62,9 @@ class SymbolEnum {
     };
 
     struct ModuleInfo {
-        wil::unique_hmodule moduleLoadedAsImageResources;
         WORD magic;
         bool isHybrid;
-        std::span<const IMAGE_CHPE_RANGE_ENTRY> chpeRanges;
+        std::vector<IMAGE_CHPE_RANGE_ENTRY> chpeRanges;
     };
 
     HMODULE m_moduleBase;
