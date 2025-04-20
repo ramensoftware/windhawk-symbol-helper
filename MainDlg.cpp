@@ -166,6 +166,8 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
 
     CLogFont fontAttributes(AtlGetDefaultGuiFont());
     wcscpy_s(fontAttributes.lfFaceName, L"Consolas");
+    fontAttributes.lfHeight =
+        -MulDiv(-fontAttributes.lfHeight, ::GetDpiForWindow(m_hWnd), 96);
     m_resultsEditFont = fontAttributes.CreateFontIndirect();
     m_resultsEdit.SetFont(m_resultsEditFont);
 
