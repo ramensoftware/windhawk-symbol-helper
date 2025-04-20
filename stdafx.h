@@ -1,9 +1,9 @@
 #pragma once
 
 // Change these values to use different versions
-#define WINVER 0x0601
-#define _WIN32_WINNT 0x0601
-#define _WIN32_IE 0x0700
+#define WINVER _WIN32_WINNT_WIN10
+#define _WIN32_WINNT _WIN32_WINNT_WIN10
+#define _WIN32_IE _WIN32_IE_IE110
 #define _RICHEDIT_VER 0x0500
 
 #define WIN32_LEAN_AND_MEAN  // Exclude rarely-used stuff from Windows headers
