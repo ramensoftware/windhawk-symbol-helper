@@ -36,6 +36,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
         CHAIN_MSG_MAP(CDialogResize<CMainDlg>)
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_DESTROY(OnDestroy)
+        MSG_WM_DPICHANGED(OnDpiChanged)
         MSG_WM_DROPFILES(OnDropFiles)
         COMMAND_ID_HANDLER_EX(IDC_PICKFILE, OnPickFile)
         COMMAND_ID_HANDLER_EX(ID_APP_ABOUT, OnAppAbout)
@@ -51,6 +52,7 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
 
     BOOL OnInitDialog(CWindow wndFocus, LPARAM lInitParam);
     void OnDestroy();
+    void OnDpiChanged(UINT nDpiX, UINT nDpiY, PRECT pRect);
     void OnDropFiles(HDROP hDropInfo);
     void OnPickFile(UINT uNotifyCode, int nID, CWindow wndCtl);
     void OnAppAbout(UINT uNotifyCode, int nID, CWindow wndCtl);
@@ -59,6 +61,8 @@ class CMainDlg : public CDialogImpl<CMainDlg>,
     void OnCancel(UINT uNotifyCode, int nID, CWindow wndCtl);
     LRESULT OnProgress(UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT OnEnumSymbolsDone(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    void UpdateResultsEditFont();
 
     HACCEL m_accelerator = nullptr;
     CEditView m_resultsEdit;

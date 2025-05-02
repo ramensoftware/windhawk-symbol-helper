@@ -164,12 +164,11 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
                              ES_NOHIDESEL | WS_VSCROLL | WS_HSCROLL,
                          WS_EX_CLIENTEDGE, IDC_RESULTS);
 
-    CLogFont fontAttributes(AtlGetDefaultGuiFont());
-    wcscpy_s(fontAttributes.lfFaceName, L"Consolas");
-    fontAttributes.lfHeight =
-        -MulDiv(-fontAttributes.lfHeight, ::GetDpiForWindow(m_hWnd), 96);
-    m_resultsEditFont = fontAttributes.CreateFontIndirect();
-    m_resultsEdit.SetFont(m_resultsEditFont);
+    m_resultsEdit.SendMessage(EM_SETEXTENDEDSTYLE,
+                              ES_EX_ALLOWEOL_ALL | ES_EX_ZOOMABLE,
+                              ES_EX_ALLOWEOL_ALL | ES_EX_ZOOMABLE);
+
+    UpdateResultsEditFont();
 
     // Init resizing.
     DlgResize_Init();
@@ -185,6 +184,10 @@ void CMainDlg::OnDestroy() {
     pLoop->RemoveMessageFilter(this);
 
     PostQuitMessage(0);
+}
+
+void CMainDlg::OnDpiChanged(UINT nDpiX, UINT nDpiY, PRECT pRect) {
+    UpdateResultsEditFont();
 }
 
 void CMainDlg::OnDropFiles(HDROP hDropInfo) {
@@ -330,7 +333,7 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                     },
                     &stopToken);
             } catch (const std::exception& e) {
-                enumSymbolsResult.Format(L"Error: %S\r\n%S", e.what(),
+                enumSymbolsResult.Format(L"Error: %S\n%S", e.what(),
                                          logOutput.GetString());
             }
 
@@ -382,4 +385,13 @@ LRESULT CMainDlg::OnEnumSymbolsDone(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     GetDlgItem(IDOK).EnableWindow(TRUE);
 
     return 0;
+}
+
+void CMainDlg::UpdateResultsEditFont() {
+    CLogFont fontAttributes(AtlGetDefaultGuiFont());
+    wcscpy_s(fontAttributes.lfFaceName, L"Consolas");
+    fontAttributes.lfHeight =
+        -MulDiv(-fontAttributes.lfHeight, ::GetDpiForWindow(m_hWnd), 96);
+    m_resultsEditFont = fontAttributes.CreateFontIndirect();
+    m_resultsEdit.SetFont(m_resultsEditFont);
 }
