@@ -390,8 +390,14 @@ LRESULT CMainDlg::OnEnumSymbolsDone(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 void CMainDlg::UpdateResultsEditFont() {
     CLogFont fontAttributes(AtlGetDefaultGuiFont());
     wcscpy_s(fontAttributes.lfFaceName, L"Consolas");
-    fontAttributes.lfHeight =
-        -MulDiv(-fontAttributes.lfHeight, ::GetDpiForWindow(m_hWnd), 96);
+    if (fontAttributes.lfHeight > 0) {
+        fontAttributes.lfHeight =
+            MulDiv(fontAttributes.lfHeight, ::GetDpiForWindow(m_hWnd), 96);
+    } else if (fontAttributes.lfHeight < 0) {
+        fontAttributes.lfHeight =
+            -MulDiv(-fontAttributes.lfHeight, ::GetDpiForWindow(m_hWnd), 96);
+    }
+
     m_resultsEditFont = fontAttributes.CreateFontIndirect();
     m_resultsEdit.SetFont(m_resultsEditFont);
 }
