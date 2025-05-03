@@ -34,13 +34,14 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
         if (logOutput) {
             callbacks.notifyLog = [&logOutput](PCSTR message) {
                 CStringA messageStr = message;
-                // Convert all newlines to LF and trim trailing newlines.
+                // Convert all newlines to CRLF and trim trailing newlines.
                 messageStr.Replace("\r\n", "\n");
                 messageStr.Replace('\r', '\n');
                 messageStr.TrimRight("\n");
+                messageStr.Replace("\n", "\r\n");
 
                 *logOutput += messageStr;
-                *logOutput += "\n";
+                *logOutput += "\r\n";
             };
         }
 
@@ -76,7 +77,7 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
             if (options.decorated) {
                 chunk += addressPrefix;
                 chunk += iter->name ? iter->name : L"<no-decorated-name>";
-                chunk += L"\n";
+                chunk += L"\r\n";
             }
 
             if (options.undecorated) {
@@ -88,7 +89,7 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
                 } else {
                     chunk += L"<no-undecorated-name>";
                 }
-                chunk += L"\n";
+                chunk += L"\r\n";
             }
 
             auto [_, inserted] = resultListChunks.insert(chunk);
@@ -103,7 +104,7 @@ CString SymbolsFromBinary(SymbolsFromBinaryOptions options,
                                   static_cast<int>(resultListTotalLength) +
                                   128);
 
-    enumSymbolsResult.Format(L"Found %zu symbols\n", count);
+    enumSymbolsResult.Format(L"Found %zu symbols\r\n", count);
 
     if (logOutput) {
         enumSymbolsResult += *logOutput;

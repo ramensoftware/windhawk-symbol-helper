@@ -164,9 +164,8 @@ BOOL CMainDlg::OnInitDialog(CWindow wndFocus, LPARAM lInitParam) {
                              ES_NOHIDESEL | WS_VSCROLL | WS_HSCROLL,
                          WS_EX_CLIENTEDGE, IDC_RESULTS);
 
-    m_resultsEdit.SendMessage(EM_SETEXTENDEDSTYLE,
-                              ES_EX_ALLOWEOL_ALL | ES_EX_ZOOMABLE,
-                              ES_EX_ALLOWEOL_ALL | ES_EX_ZOOMABLE);
+    m_resultsEdit.SendMessage(EM_SETEXTENDEDSTYLE, ES_EX_ZOOMABLE,
+                              ES_EX_ZOOMABLE);
 
     UpdateResultsEditFont();
 
@@ -333,7 +332,7 @@ void CMainDlg::OnOK(UINT uNotifyCode, int nID, CWindow wndCtl) {
                     },
                     &stopToken);
             } catch (const std::exception& e) {
-                enumSymbolsResult.Format(L"Error: %S\n%S", e.what(),
+                enumSymbolsResult.Format(L"Error: %S\r\n%S", e.what(),
                                          logOutput.GetString());
             }
 
